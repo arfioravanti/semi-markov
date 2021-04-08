@@ -186,3 +186,85 @@ status_rayleigh = zeros(Nsim,1);
 for i = 1:Nsim
     [cost_rayleigh(i),status_rayleigh(i)] = simulation_rayleigh_sf(A,B,C,D,K,P,sigma_ray*ones(2,1),[1;1],1);
 end
+
+%% Exemplo 2
+clear
+close
+clc
+
+sigma = sqrt(2/pi)./[0.3 1.5 2];
+    
+Ahat = [ -11.4540  2.7185 -19.4399 0;
+           0.5068 -2.9875  23.3434 0;
+           0.0922 -0.9957  -0.4680 0.3256;
+           1       0.0926   0      0];
+       
+Bhat = [ 78.4002 -3.4690 0 0;
+         -2.7282 13.9685 0 0]';
+     
+Jhat = eye(4);
+
+Chat = [eye(2) zeros(2);zeros(2,4)];
+Dhat = [zeros(2);eye(2)];
+
+A = cell(1,3);
+B = cell(1,3);
+E = cell(1,3);
+C = cell(1,3);
+D = cell(1,3);
+
+for i = 1:3
+    A{i} = Ahat;
+    B{i} = Bhat;
+    E{i} = Jhat;
+    C{i} = Chat;
+    D{i} = Dhat;
+end
+
+B{2} = Bhat*[0 0; 0 1];
+B{3} = B{2};
+B{3} = Bhat*[0 0; 0 1/2];
+
+Pi = [   0   2/3 1/3;
+       11/15  0  4/15;
+        1/2  1/2  0   ];
+    
+mu = [1 0 0];
+
+custo = zeros(1,7);
+tempo_parser = zeros(1,7);
+tempo_solver = zeros(1,7);
+for idx = 1:7
+    order = 2*idx;
+    [norm,sol,v,Qq,res] = sf_rayleigh3(sigma,A,B,E,C,D,Pi,mu,order);
+    tempo_parser(idx) = sol.yalmiptime;
+    tempo_solver(idx) = sol.solvertime;
+    custo(idx) = norm;
+end
+
+%%
+Lambda = [-0.3 0.2 0.1; 1.1 -1.5 0.4; 1 1 -2];
+[norma,vK] = markov_h2_sf(Lambda, A, B, E, C, D, mu);
+
+Nsim = 3e4;
+
+cost_rayleigh1 = zeros(Nsim,1);
+status_rayleigh1 = zeros(Nsim,1);
+cost_rayleigh2 = zeros(Nsim,1);
+status_rayleigh2 = zeros(Nsim,1);
+cost_rayleigh3 = zeros(Nsim,1);
+status_rayleigh3 = zeros(Nsim,1);
+cost_rayleigh4 = zeros(Nsim,1);
+status_rayleigh4 = zeros(Nsim,1);
+
+K = cell(1,3);
+K{1} = @(t) vK{1};
+K{2} = @(t) vK{2};
+K{3} = @(t) vK{3};
+
+parfor i = 1:Nsim
+    [cost_rayleigh1(i),status_rayleigh1(i)] = simulation_rayleigh_sf(A,B,C,D,K,Pi,sigma,[1;0;0;0],1);
+    [cost_rayleigh2(i),status_rayleigh2(i)] = simulation_rayleigh_sf(A,B,C,D,K,Pi,sigma,[0;1;0;0],1);
+    [cost_rayleigh3(i),status_rayleigh3(i)] = simulation_rayleigh_sf(A,B,C,D,K,Pi,sigma,[0;0;1;0],1);
+    [cost_rayleigh4(i),status_rayleigh4(i)] = simulation_rayleigh_sf(A,B,C,D,K,Pi,sigma,[0;0;0;1],1);
+end

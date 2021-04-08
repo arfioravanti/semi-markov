@@ -15,12 +15,12 @@ function [norm,sol,v,Qq,res] = sf_rayleigh3(sigma,A,B,E,C,D,Pi,mu,order)
     Z = cell(N,N);
     c = [];
     
-    d = cell(1,2);
-	d{1} = 1+h^order;
-    d{2} = d{1};
-    ddot = cell(1,2);
-    ddot{1} = order*h^(order-1);
-    ddot{2} = ddot{1};
+    d = cell(1,N);
+    ddot = cell(1,N);
+    for i = 1:N
+        d{i} = 1+h^order;
+        ddot{i} = order*h^(order-1);
+    end
     dim_d = order;
 
     for i = 1:N
@@ -100,7 +100,7 @@ function [norm,sol,v,Qq,res] = sf_rayleigh3(sigma,A,B,E,C,D,Pi,mu,order)
         T(n+p+1:2*n+p,n+p+1:2*n+p) = -eps^(-1)*rho(i)*eye(n);
         
         T2 = [W{i}, E{i}'; E{i}, replace(X{i},h,0)];
-        F = [F, sos(X{i}-eps*d{i}*eye(n)), sos(eps^(-1)*d{i}*eye(n)-X{i}), sos(M1{i}-eps*eye(2*n+p)), sos(-T - h*M1{i} - eps*eye(2*n+p)), T2 >= eps*eye(m)];
+        F = [F, sos(X{i}-eps*d{i}*eye(n)), sos(eps^(-1)*d{i}*eye(n)-X{i}), sos(M1{i}-eps*eye(2*n+p)), sos(-T - h*M1{i} - eps*eye(2*n+p)), T2 >= eps*eye(m+n)];
         obj = obj + mu(i)*trace(W{i});
         for j = 1:N
             if (j == i)
